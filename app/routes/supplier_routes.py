@@ -1,49 +1,49 @@
 from flask import Blueprint, request, jsonify
+from marshmallow import ValidationError
 from app.extensions import db
-form app.models.supplier import Supplier
+from app.models.supplier import Supplier
+from app.schemas.supplier_schema import SupplierSchema
 
 supplier_bp = Blueprint("supplier_bp", __name__, url_prefix="/api/suppliers")
 
+supplier_schema = SupplierSchema()
+suppliers_schema = SupplierSchema(many=True)
+
+
 @supplier_bp.route("", methods=["POST"])
 def create_supplier():
-    data = request.get_json() or []
+    data = request.get_json() or {}
 
-    name = data.get("name", "").strip()
-    phone = data.get("phone", "").strip()
-    email = data.get("email", "").strip()
-    address = data.get("address", "").strip()
-
-    if not name:
+    try:
+        validated_data = supplier_schema.load(data)
+    except ValidationError as err:
         return jsonify({
             "status": "error",
             "message": "Validation failed",
-            "errors": {"name": ["Supplier name is required"]}
+            "errors": err.messages
         }), 400
 
-        existing_supplier = Supplier.query.filter_by(name=name).first()
-        if existing_supplier:
-            return jsonify({
-                "status": "error",
-                "message": "Supplier already exists",
-                "errors": {"name": ["Supplier name must be unique"]}
-            }), 409
+    name = validated_data["name"].strip()
+    phone = validated_data.get("phone", "")
+    email = validated_data.get("email", "")
+    address = validated_data.get("address", "")
 
-        if email and "@" not in email:
-            return jsonify({
-                "status": "error",
-                "message": "Validation failed",
-                "errors": {"email": ["Enter a valid email address"]}
-            }), 400
+    existing_supplier = Supplier.query.filter_by(name=name).first()
+    if existing_supplier:
+        return jsonify({
+            "status": "error",
+            "message": "Supplier already exists",
+            "errors": {"name": ["Supplier name must be unique"]}
+        }), 409
 
     new_supplier = Supplier(name=name, phone=phone, email=email, address=address)
-
     db.session.add(new_supplier)
     db.session.commit()
 
     return jsonify({
         "status": "success",
-        "message": "supplier created successfully",
-        "data": new_supplier.to_dict()
+        "message": "Supplier created successfully",
+        "data": supplier_schema.dump(new_supplier)
     }), 201
 
 
@@ -54,23 +54,27 @@ def get_suppliers():
     return jsonify({
         "status": "success",
         "message": "Suppliers retrieved successfully",
-        "data": [supplier.to_dict() for supplier in suppliers]
+        "data": suppliers_schema.dump(suppliers)
     }), 200
 
-@supplier_bp.route("/<int:supplier_id>", methods=["GET"])
-    def get_supplier(supplier_id):
-        suppliers = Supplier.query.get(supplier_id)
 
+@supplier_bp.route("/<int:supplier_id>", methods=["GET"])
+def get_supplier(supplier_id):
+    supplier = Supplier.query.get(supplier_id)
+
+    if not supplier:
         return jsonify({
             "status": "error",
             "message": "Supplier not found",
-            "errors":[]
+            "errors": []
         }), 404
-        return jsonify({
-            "status": "success",
-            "message": "Supplier retrieved successfully",
-            "data": supplier.to_dict()
-        }), 200
+
+    return jsonify({
+        "status": "success",
+        "message": "Supplier retrieved successfully",
+        "data": supplier_schema.dump(supplier)
+    }), 200
+
 
 @supplier_bp.route("/<int:supplier_id>", methods=["PUT"])
 def update_supplier(supplier_id):
@@ -80,24 +84,37 @@ def update_supplier(supplier_id):
         return jsonify({
             "status": "error",
             "message": "Supplier not found",
-            "errors":[]
+            "errors": []
         }), 404
 
     data = request.get_json() or {}
 
-    name = data.get("name", supplier.name).strip()
-    phone = data.get("phone", supplier.phone or "").strip()
-    email = data.get("email", supplier.email or "").strip()
-    address = data.get("address", supplier.address or "").strip()
+    try:
+        validated_data = supplier_schema.load(data, partial=True)
+    except ValidationError as err:
+        return jsonify({
+            "status": "error",
+            "message": "Validation failed",
+            "errors": err.messages
+        }), 400
 
-    if not name: 
+    name = validated_data.get("name", supplier.name).strip()
+    phone = validated_data.get("phone", supplier.phone or "")
+    email = validated_data.get("email", supplier.email or "")
+    address = validated_data.get("address", supplier.address or "")
+
+    if not name:
         return jsonify({
             "status": "error",
             "message": "Validation failed",
             "errors": {"name": ["Supplier name is required"]}
         }), 400
 
-    existing_supplier = Supplier.query.filter(Supplier.name == name, Supplier.id != supplier_id).first()
+    existing_supplier = Supplier.query.filter(
+        Supplier.name == name,
+        Supplier.id != supplier_id
+    ).first()
+
     if existing_supplier:
         return jsonify({
             "status": "error",
@@ -105,24 +122,16 @@ def update_supplier(supplier_id):
             "errors": {"name": ["Supplier name must be unique"]}
         }), 409
 
-    if email and "@" not in email:
-        return jsonify({
-            "status": "error",
-            "message": "Validation failed",
-            "errors": {"email": ["Enter a valid email address"]}
-        }), 400
-
     supplier.name = name
     supplier.phone = phone
     supplier.email = email
     supplier.address = address
-
     db.session.commit()
 
     return jsonify({
         "status": "success",
         "message": "Supplier updated successfully",
-        "data": supplier.to_dict()
+        "data": supplier_schema.dump(supplier)
     }), 200
 
 
@@ -134,7 +143,7 @@ def delete_supplier(supplier_id):
         return jsonify({
             "status": "error",
             "message": "Supplier not found",
-            "errors":[]
+            "errors": []
         }), 404
 
     db.session.delete(supplier)
