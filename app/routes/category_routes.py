@@ -1,45 +1,59 @@
 from flask import Blueprint, request, jsonify
+from marshmallow import ValidationError
 from app.extensions import db
 from app.models.category import Category
+from app.schemas.category_schema import CategorySchema
 
-category_bp = Blueprint("category_bp", __name__, url_prefix ="/api/categories")
+category_bp = Blueprint("category_bp", __name__, url_prefix="/api/categories")
+
+category_schema = CategorySchema()
+categories_schema = CategorySchema(many=True)
 
 
-@category_bp.route("/", methods=["POST"])
+@category_bp.route("", methods=["POST"])
 def create_category():
     data = request.get_json() or {}
 
-    name = data.get("name", "").strip()
-    description = data.get("description", "").strip()
-
-    if not name:
+    try:
+        validated_data = category_schema.load(data)
+    except ValidationError as err:
         return jsonify({
             "status": "error",
             "message": "Validation failed",
-            "errors": {"name": ["Category name is required"]}
+            "errors": err.messages
         }), 400
 
-    
-    existing_category = Category(name=name, description=description)
-    db.session.add(existing_category)
+    name = validated_data["name"].strip()
+    description = validated_data.get("description", "")
+
+    existing_category = Category.query.filter_by(name=name).first()
+    if existing_category:
+        return jsonify({
+            "status": "error",
+            "message": "Category already exists",
+            "errors": {"name": ["Category name must be unique"]}
+        }), 409
+
+    category = Category(name=name, description=description)
+    db.session.add(category)
     db.session.commit()
 
     return jsonify({
         "status": "success",
         "message": "Category created successfully",
-        "data": existing_category.to_dict()
+        "data": category_schema.dump(category)
     }), 201
 
 
-    @category_bp.route("", methods=["GET"])
-    def get_categories():
-        categories = Category.query.all()
+@category_bp.route("", methods=["GET"])
+def get_categories():
+    categories = Category.query.all()
 
-        return jsonify({
-            "status": "success",
-            "message": "Categories retrived successfully",
-            "data": [category.to_dict() for category in categories]
-        }), 200
+    return jsonify({
+        "status": "success",
+        "message": "Categories retrieved successfully",
+        "data": categories_schema.dump(categories)
+    }), 200
 
 
 @category_bp.route("/<int:category_id>", methods=["GET"])
@@ -50,13 +64,13 @@ def get_category(category_id):
         return jsonify({
             "status": "error",
             "message": "Category not found",
-            "errors":[]
+            "errors": []
         }), 404
 
     return jsonify({
         "status": "success",
-        "message": "Category retrived successfully",
-        "data": category.to_dict()
+        "message": "Category retrieved successfully",
+        "data": category_schema.dump(category)
     }), 200
 
 
@@ -68,22 +82,30 @@ def update_category(category_id):
         return jsonify({
             "status": "error",
             "message": "Category not found",
-            "errors":[]
+            "errors": []
         }), 404
 
     data = request.get_json() or {}
 
-    name = data.get("name", category.name).strip()
-    description = data.get("description", category.description or "").strip()
+    try:
+        validated_data = category_schema.load(data, partial=True)
+    except ValidationError as err:
+        return jsonify({
+            "status": "error",
+            "message": "Validation failed",
+            "errors": err.messages
+        }), 400
 
-    if not name: 
+    name = validated_data.get("name", category.name).strip()
+    description = validated_data.get("description", category.description or "")
+
+    if not name:
         return jsonify({
             "status": "error",
             "message": "Validation failed",
             "errors": {"name": ["Category name is required"]}
         }), 400
 
-    
     existing_category = Category.query.filter(
         Category.name == name,
         Category.id != category_id
@@ -98,14 +120,13 @@ def update_category(category_id):
 
     category.name = name
     category.description = description
-
     db.session.commit()
 
     return jsonify({
         "status": "success",
         "message": "Category updated successfully",
-        "data": category.to_dict()
-    })
+        "data": category_schema.dump(category)
+    }), 200
 
 
 @category_bp.route("/<int:category_id>", methods=["DELETE"])
@@ -116,7 +137,7 @@ def delete_category(category_id):
         return jsonify({
             "status": "error",
             "message": "Category not found",
-            "errors":[]
+            "errors": []
         }), 404
 
     db.session.delete(category)
