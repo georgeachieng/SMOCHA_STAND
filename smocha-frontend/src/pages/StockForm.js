@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-
-const API = 'http://127.0.0.1:5000/api/transactions/';
+import inventoryService from '../services/inventoryService';
 
 function StockForm() {
   const [form, setForm] = useState({ product_id: '', transaction_type: 'stock_in', quantity: '', note: '' });
@@ -16,13 +15,7 @@ function StockForm() {
 
     const payload = { ...form, product_id: parseInt(form.product_id), quantity: parseInt(form.quantity) };
 
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const json = await res.json();
+    const json = await inventoryService.create(payload);
     if (json.status === 'success') {
       setMessage(`✅ ${json.message}`);
       setForm({ product_id: '', transaction_type: 'stock_in', quantity: '', note: '' });
@@ -52,8 +45,8 @@ function StockForm() {
 
         <button style={styles.button} type="submit">Submit Transaction</button>
 
-        {message && <p style={{color: 'green', marginTop: '1rem'}}>{message}</p>}
-        {error && <p style={{color: 'red', marginTop: '1rem'}}>{error}</p>}
+        {message && <p style={{ color: 'green', marginTop: '1rem' }}>{message}</p>}
+        {error && <p style={{ color: 'red', marginTop: '1rem' }}>{error}</p>}
       </form>
     </div>
   );

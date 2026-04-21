@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
-
-const API = 'http://127.0.0.1:5000/api/transactions/';
+import inventoryService from '../services/inventoryService';
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(API)
-      .then(res => res.json())
-      .then(json => {
-        setTransactions(json.data || []);
+    inventoryService.getAll()
+      .then(res => {
+        setTransactions(res.data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -36,7 +34,7 @@ function Dashboard() {
               <tr key={t.id} style={styles.row}>
                 <td style={styles.td}>{t.id}</td>
                 <td style={styles.td}>
-                  <span style={{...styles.badge, background: t.transaction_type === 'stock_in' ? '#27ae60' : '#e74c3c'}}>
+                  <span style={{ ...styles.badge, background: t.transaction_type === 'stock_in' ? '#27ae60' : '#e74c3c' }}>
                     {t.transaction_type}
                   </span>
                 </td>
