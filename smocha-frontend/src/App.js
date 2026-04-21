@@ -1,27 +1,30 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import StockForm from './pages/StockForm';
 
 function App() {
   return (
-    <Router>
-      <div style={styles.container}>
-        <nav style={styles.nav}>
-          <h2 style={styles.logo}>🌭 Smocha Stand</h2>
-          <div style={styles.navLinks}>
-            <Link to="/" style={styles.link}>Dashboard</Link>
-            <Link to="/stock" style={styles.link}>Record Stock</Link>
+    <AuthProvider>
+      <Router>
+        <div style={styles.container}>
+          <nav style={styles.nav}>
+            <h2 style={styles.logo}>🌭 Smocha Stand</h2>
+            <div style={styles.navLinks}>
+              <Link to="/" style={styles.link}>Dashboard</Link>
+              <Link to="/stock" style={styles.link}>Record Stock</Link>
+            </div>
+          </nav>
+          <div style={styles.content}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/stock" element={<StockForm />} />
+            </Routes>
           </div>
-        </nav>
-        <div style={styles.content}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/stock" element={<StockForm />} />
-          </Routes>
         </div>
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 
