@@ -1,70 +1,102 @@
-# Getting Started with Create React App
+# Smocha Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend application for the **Smocha Stand Inventory System**.
 
-## Available Scripts
+This app is built with React and currently supports transaction viewing and stock transaction submission, while also providing the shared structure/services/hooks for team integration.
 
-In the project directory, you can run:
+## Stack
 
-### `npm start`
+- React (Create React App)
+- React Router
+- JavaScript (JSX)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Current Frontend Scope
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Implemented pages:
+- `src/pages/Dashboard.js` - lists stock transactions
+- `src/pages/StockForm.js` - creates stock in/out transactions
 
-### `npm test`
+App shell:
+- `src/App.js` - routing + navbar + `AuthProvider`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Integration scaffolding:
+- `src/services/` - API/service layer files
+- `src/context/AuthContext.jsx` - auth state provider
+- `src/hooks/useAuth.js`, `src/hooks/useFetch.js`
 
-### `npm run build`
+Team structure scaffolding (for module ownership):
+- `src/components/{auth,layout,categories,suppliers,products,inventory}`
+- `src/pages/*.jsx` module pages
+- `src/styles/*.css`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Project Structure
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```text
+smocha-frontend/
+├── public/
+└── src/
+    ├── components/
+    │   ├── auth/
+    │   ├── layout/
+    │   ├── categories/
+    │   ├── suppliers/
+    │   ├── products/
+    │   └── inventory/
+    ├── context/
+    ├── hooks/
+    ├── pages/
+    ├── services/
+    ├── styles/
+    ├── App.js
+    └── index.js
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Routes (Current)
 
-### `npm run eject`
+- `/` -> Dashboard
+- `/stock` -> Stock transaction form
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## API Integration
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Expected backend base URL:
+- `http://127.0.0.1:5000`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Transaction endpoints used:
+- `GET /api/transactions/`
+- `POST /api/transactions/`
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Setup
 
-## Learn More
+From repo root:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+cd smocha-frontend
+npm install
+npm start
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Frontend runs on:
+- `http://localhost:3000`
 
-### Code Splitting
+## Build
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+npm run build
+```
 
-### Analyzing the Bundle Size
+## Team Integration Notes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- Keep API calls in `src/services/` (avoid hardcoded URLs inside page components).
+- Keep page-level UI in `src/pages/` and reusable pieces in `src/components/`.
+- Keep auth/session logic centralized in `AuthContext` + hooks.
 
-### Making a Progressive Web App
+## Contribution Workflow
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+git checkout feat/person4-transactions-frontend
+git pull origin feat/person4-transactions-frontend
+# make changes
+git add .
+git commit -m "<message>"
+git push origin feat/person4-transactions-frontend
+```
