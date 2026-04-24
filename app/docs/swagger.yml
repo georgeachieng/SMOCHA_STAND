@@ -1,0 +1,203 @@
+# Smocha Stand API Documentation
+# Group project - Moringa School Module 5
+# Run flask run and go to /apidocs to see this
+swagger: "2.0"
+info:
+  title: Smocha Stand API
+  description: Inventory management system for Smocha Stand - tracks products, stock levels and transactions
+  version: "1.0.0"
+basePath: /api
+schemes:
+  - http
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: "JWT token. Format: Bearer <token>"
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required: [username, email, password]
+            properties:
+              username:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Validation error
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required: [email, password]
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Login successful, returns JWT token
+        401:
+          description: Invalid credentials
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Get all categories
+      responses:
+        200:
+          description: List of categories
+    post:
+      tags: [Categories]
+      summary: Create a category
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+      responses:
+        201:
+          description: Category created
+
+  /suppliers:
+    get:
+      tags: [Suppliers]
+      summary: Get all suppliers
+      responses:
+        200:
+          description: List of suppliers
+    post:
+      tags: [Suppliers]
+      summary: Create a supplier
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              contact_email:
+                type: string
+              phone:
+                type: string
+      responses:
+        201:
+          description: Supplier created
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Get all products
+      responses:
+        200:
+          description: List of products
+    post:
+      tags: [Products]
+      summary: Create a product
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required: [name, price, category_id]
+            properties:
+              name:
+                type: string
+              price:
+                type: number
+              stock_quantity:
+                type: integer
+              category_id:
+                type: integer
+              supplier_id:
+                type: integer
+      responses:
+        201:
+          description: Product created
+
+  # Person 4 endpoints below
+  /transactions:
+    get:
+      tags: [Transactions]
+      summary: Get all stock transactions
+      responses:
+        200:
+          description: List of transactions
+    post:
+      tags: [Transactions]
+      summary: Record a stock transaction
+      security:
+        - Bearer: []
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required: [product_id, transaction_type, quantity]
+            properties:
+              product_id:
+                type: integer
+              transaction_type:
+                type: string
+                enum: [stock_in, stock_out]
+              quantity:
+                type: integer
+              note:
+                type: string
+      responses:
+        201:
+          description: Transaction recorded
+        400:
+          description: Insufficient stock or validation error
+
+  /transactions/{id}:
+    get:
+      tags: [Transactions]
+      summary: Get a transaction by ID
+      parameters:
+        - in: path
+          name: id
+          type: integer
+          required: true
+      responses:
+        200:
+          description: Transaction details
+        404:
+          description: Transaction not found
+
+# TODO: add DELETE endpoints if we need them later
