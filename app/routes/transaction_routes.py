@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from ..extensions import db
-from ..models.stock_transaction import StockTransaction, Product
+from ..models.product import Product
+from ..models.stock_transaction import StockTransaction
 from ..schemas.transaction_schema import transaction_schema, transactions_schema
 
 transaction_bp = Blueprint('transactions', __name__)
