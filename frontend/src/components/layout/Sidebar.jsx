@@ -2,10 +2,10 @@ import { NavLink } from "react-router-dom";
 
 const navItems = [
   { label: "Dashboard", to: "/" },
-  { label: "Products", to: "/products", disabled: true },
-  { label: "Suppliers", to: "/suppliers", disabled: true },
-  { label: "Categories", to: "/categories", disabled: true },
-  { label: "Inventory", to: "/inventory", disabled: true },
+  { label: "Products", to: "/products" },
+  { label: "Suppliers", to: "/suppliers" },
+  { label: "Categories", to: "/categories" },
+  { label: "Inventory", to: "/inventory" },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
