@@ -1,7 +1,7 @@
 from functools import wraps
 
 from flask import jsonify
-from flask_jwt_extended import get_jwt, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 from app.extensions import db
 from app.models.user import User
@@ -12,10 +12,13 @@ def role_required(*allowed_roles):
         @wraps(fn)
         def wrapper(*args, **kwargs):
             verify_jwt_in_request()
-            claims = get_jwt()
-            role = claims.get("role")
+            user_id = get_jwt_identity()
+            user = db.session.get(User, int(user_id))
 
-            if role not in allowed_roles:
+            if user is None or not user.is_active:
+                return jsonify({"message": "User account is unavailable"}), 401
+
+            if user.role not in allowed_roles:
                 return jsonify({"message": "Forbidden: insufficient permissions"}), 403
 
             return fn(*args, **kwargs)

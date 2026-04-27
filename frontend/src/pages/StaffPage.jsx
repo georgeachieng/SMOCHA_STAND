@@ -1,12 +1,98 @@
 import { useEffect, useState } from "react";
 import api from "../services/api.js";
 
+const panelStyle = {
+  backgroundColor: "#ffffff",
+  borderRadius: "1rem",
+  border: "1px solid rgba(148, 163, 184, 0.22)",
+  boxShadow: "0 18px 45px rgba(15, 23, 42, 0.08)",
+};
+
+const roleBadgeStyles = {
+  owner: { backgroundColor: "#f59e0b", color: "#172033" },
+  employee: { backgroundColor: "#059669", color: "#ffffff" },
+  customer: { backgroundColor: "#475569", color: "#ffffff" },
+};
+
+function StatCard({ label, value, accent }) {
+  return (
+    <div
+      style={{
+        ...panelStyle,
+        padding: "1rem 1.1rem",
+        borderTop: `4px solid ${accent}`,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: "0.8rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "#64748b",
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          margin: "0.5rem 0 0",
+          fontSize: "1.9rem",
+          fontWeight: 800,
+          color: "#172033",
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function RoleBadge({ role }) {
+  const style = roleBadgeStyles[role] ?? roleBadgeStyles.customer;
+
+  return (
+    <span
+      style={{
+        ...style,
+        display: "inline-flex",
+        alignItems: "center",
+        borderRadius: "999px",
+        padding: "0.3rem 0.7rem",
+        fontSize: "0.75rem",
+        fontWeight: 700,
+        textTransform: "capitalize",
+      }}
+    >
+      {role}
+    </span>
+  );
+}
+
+function EmptyState({ message }) {
+  return (
+    <div
+      style={{
+        padding: "1.25rem",
+        borderRadius: "0.85rem",
+        backgroundColor: "#f8fafc",
+        color: "#64748b",
+        textAlign: "center",
+      }}
+    >
+      {message}
+    </div>
+  );
+}
+
 export default function StaffPage() {
   const [users, setUsers] = useState([]);
-  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isCreatingEmployee, setIsCreatingEmployee] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState(null);
   const [newEmployee, setNewEmployee] = useState({
     username: "",
     email: "",
@@ -14,272 +100,408 @@ export default function StaffPage() {
   });
 
   useEffect(() => {
-    fetchUsers();
-    fetchEmployees();
+    void loadUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  const loadUsers = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
       const response = await api.getUsers();
-      setUsers(response.users);
+      setUsers(response.users ?? []);
     } catch (err) {
-      setError("Failed to fetch users");
-    }
-  };
-
-  const fetchEmployees = async () => {
-    try {
-      const response = await api.getEmployees();
-      setEmployees(response.employees);
-    } catch (err) {
-      setError("Failed to fetch employees");
+      setError(err.message || "Failed to load staff accounts");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateEmployee = async (e) => {
-    e.preventDefault();
+  const owners = users.filter((user) => user.role === "owner");
+  const employees = users.filter((user) => user.role === "employee");
+  const customers = users.filter((user) => user.role === "customer");
+
+  const handleCreateEmployee = async (event) => {
+    event.preventDefault();
+    setIsCreatingEmployee(true);
+    setError(null);
+
     try {
       await api.createEmployee(newEmployee);
       setNewEmployee({ username: "", email: "", password: "" });
       setShowCreateForm(false);
-      fetchEmployees();
-      fetchUsers();
+      await loadUsers();
     } catch (err) {
       setError(err.message || "Failed to create employee");
+    } finally {
+      setIsCreatingEmployee(false);
     }
   };
 
-  const handleDeleteEmployee = async (userId) => {
-    if (!confirm("Are you sure you want to remove this employee?")) return;
+  const handleRoleChange = async (user, nextRole) => {
+    const actionLabel =
+      nextRole === "employee" ? "grant staff access to" : "remove staff access from";
+
+    if (!window.confirm(`Are you sure you want to ${actionLabel} ${user.username}?`)) {
+      return;
+    }
+
+    setPendingUserId(user.id);
+    setError(null);
+
     try {
-      await api.deleteEmployee(userId);
-      fetchEmployees();
-      fetchUsers();
+      await api.updateUserRole(user.id, nextRole);
+      await loadUsers();
     } catch (err) {
-      setError(err.message || "Failed to remove employee");
+      setError(err.message || "Failed to update user role");
+    } finally {
+      setPendingUserId(null);
     }
   };
+
+  const renderUserTable = ({ title, description, usersToRender, actionLabel, onAction, actionColor }) => (
+    <section style={{ ...panelStyle, padding: "1.4rem" }}>
+      <div style={{ marginBottom: "1rem" }}>
+        <h2 style={{ margin: 0, color: "#172033", fontSize: "1.2rem" }}>{title}</h2>
+        <p style={{ margin: "0.35rem 0 0", color: "#64748b", lineHeight: 1.5 }}>
+          {description}
+        </p>
+      </div>
+
+      {usersToRender.length === 0 ? (
+        <EmptyState message={`No accounts found for ${title.toLowerCase()}.`} />
+      ) : (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                  Username
+                </th>
+                <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                  Email
+                </th>
+                <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                  Role
+                </th>
+                <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {usersToRender.map((user) => {
+                const isBusy = pendingUserId === user.id;
+
+                return (
+                  <tr key={user.id} style={{ borderBottom: "1px solid #eef2f7" }}>
+                    <td style={{ padding: "1rem 0.75rem", color: "#172033", fontWeight: 700 }}>
+                      {user.username}
+                    </td>
+                    <td style={{ padding: "1rem 0.75rem", color: "#334155" }}>{user.email}</td>
+                    <td style={{ padding: "1rem 0.75rem" }}>
+                      <RoleBadge role={user.role} />
+                    </td>
+                    <td style={{ padding: "1rem 0.75rem" }}>
+                      <button
+                        type="button"
+                        onClick={() => onAction(user)}
+                        disabled={isBusy}
+                        style={{
+                          border: 0,
+                          borderRadius: "0.7rem",
+                          padding: "0.65rem 0.95rem",
+                          backgroundColor: actionColor,
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          cursor: isBusy ? "wait" : "pointer",
+                          opacity: isBusy ? 0.75 : 1,
+                        }}
+                      >
+                        {isBusy ? "Saving..." : actionLabel}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
 
   if (loading) {
     return (
-      <div style={{ padding: "2rem", textAlign: "center" }}>
-        <p>Loading users...</p>
+      <div style={{ padding: "2rem", textAlign: "center", color: "#475569" }}>
+        <p>Loading staff manager...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1 style={{ marginBottom: "2rem", color: "#172033" }}>Staff Management</h1>
+    <div style={{ padding: "1rem", display: "grid", gap: "1.5rem" }}>
+      <section
+        style={{
+          ...panelStyle,
+          padding: "1.6rem",
+          background:
+            "linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(255, 255, 255, 0.98) 40%, rgba(219, 234, 254, 0.95))",
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            color: "#b45309",
+            fontWeight: 800,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            fontSize: "0.78rem",
+          }}
+        >
+          Owner Controls
+        </p>
+        <h1 style={{ margin: "0.55rem 0 0", color: "#172033", fontSize: "2rem" }}>
+          Manage Staff
+        </h1>
+        <p style={{ margin: "0.7rem 0 0", color: "#475569", lineHeight: 1.7, maxWidth: "52rem" }}>
+          Promote existing customer accounts so they can serve orders, or revoke
+          those rights when they should no longer work as staff.
+        </p>
+      </section>
 
-      {error && (
+      {error ? (
         <div
           style={{
             backgroundColor: "#fee2e2",
-            color: "#dc2626",
-            padding: "1rem",
-            borderRadius: "0.5rem",
-            marginBottom: "1rem",
+            color: "#b91c1c",
+            padding: "1rem 1.1rem",
+            borderRadius: "0.85rem",
+            border: "1px solid #fecaca",
           }}
         >
           {error}
         </div>
-      )}
+      ) : null}
 
-      <div style={{ marginBottom: "2rem" }}>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        <StatCard label="Owners" value={owners.length} accent="#f59e0b" />
+        <StatCard label="Staff" value={employees.length} accent="#059669" />
+        <StatCard label="Customers" value={customers.length} accent="#334155" />
+      </section>
+
+      <section style={{ ...panelStyle, padding: "1.4rem" }}>
+        <div
           style={{
-            backgroundColor: "#fbbf24",
-            color: "#172033",
-            border: "none",
-            padding: "0.75rem 1.5rem",
-            borderRadius: "0.5rem",
-            cursor: "pointer",
-            fontWeight: "600",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "1rem",
+            flexWrap: "wrap",
           }}
         >
-          {showCreateForm ? "Cancel" : "Add Employee"}
-        </button>
-      </div>
+          <div>
+            <h2 style={{ margin: 0, color: "#172033", fontSize: "1.2rem" }}>
+              Create a dedicated staff account
+            </h2>
+            <p style={{ margin: "0.35rem 0 0", color: "#64748b", lineHeight: 1.5 }}>
+              Use this if you want to hire someone directly without asking them to
+              register as a customer first.
+            </p>
+          </div>
 
-      {showCreateForm && (
-        <form
-          onSubmit={handleCreateEmployee}
-          style={{
-            backgroundColor: "#f8fafc",
-            padding: "1.5rem",
-            borderRadius: "0.5rem",
-            marginBottom: "2rem",
-            border: "1px solid #e2e8f0",
-          }}
-        >
-          <h3 style={{ marginBottom: "1rem", color: "#172033" }}>Create Employee</h3>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#374151" }}>
-              Username
-            </label>
-            <input
-              type="text"
-              value={newEmployee.username}
-              onChange={(e) => setNewEmployee({ ...newEmployee, username: e.target.value })}
-              required
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                border: "1px solid #d1d5db",
-                borderRadius: "0.375rem",
-                fontSize: "1rem",
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#374151" }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={newEmployee.email}
-              onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-              required
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                border: "1px solid #d1d5db",
-                borderRadius: "0.375rem",
-                fontSize: "1rem",
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", marginBottom: "0.5rem", color: "#374151" }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={newEmployee.password}
-              onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
-              required
-              minLength="8"
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                border: "1px solid #d1d5db",
-                borderRadius: "0.375rem",
-                fontSize: "1rem",
-              }}
-            />
-          </div>
           <button
-            type="submit"
+            type="button"
+            onClick={() => setShowCreateForm((current) => !current)}
             style={{
-              backgroundColor: "#10b981",
-              color: "white",
-              border: "none",
-              padding: "0.75rem 1.5rem",
-              borderRadius: "0.375rem",
+              border: 0,
+              borderRadius: "0.8rem",
+              padding: "0.8rem 1.1rem",
+              backgroundColor: "#172033",
+              color: "#ffffff",
+              fontWeight: 700,
               cursor: "pointer",
-              fontWeight: "600",
             }}
           >
-            Create Employee
+            {showCreateForm ? "Close Form" : "Add Staff Account"}
           </button>
-        </form>
-      )}
+        </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
-        <div>
-          <h2 style={{ marginBottom: "1rem", color: "#172033" }}>All Staff & Owners</h2>
-          <div
+        {showCreateForm ? (
+          <form
+            onSubmit={handleCreateEmployee}
             style={{
-              backgroundColor: "white",
-              borderRadius: "0.5rem",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              overflow: "hidden",
+              marginTop: "1.25rem",
+              display: "grid",
+              gap: "1rem",
+              padding: "1.2rem",
+              borderRadius: "0.9rem",
+              backgroundColor: "#f8fafc",
             }}
           >
+            <label style={{ display: "grid", gap: "0.45rem", color: "#334155" }}>
+              Username
+              <input
+                type="text"
+                value={newEmployee.username}
+                onChange={(event) =>
+                  setNewEmployee((current) => ({
+                    ...current,
+                    username: event.target.value,
+                  }))
+                }
+                required
+                style={{
+                  padding: "0.8rem 0.9rem",
+                  borderRadius: "0.7rem",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "1rem",
+                }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: "0.45rem", color: "#334155" }}>
+              Email
+              <input
+                type="email"
+                value={newEmployee.email}
+                onChange={(event) =>
+                  setNewEmployee((current) => ({
+                    ...current,
+                    email: event.target.value,
+                  }))
+                }
+                required
+                style={{
+                  padding: "0.8rem 0.9rem",
+                  borderRadius: "0.7rem",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "1rem",
+                }}
+              />
+            </label>
+
+            <label style={{ display: "grid", gap: "0.45rem", color: "#334155" }}>
+              Password
+              <input
+                type="password"
+                value={newEmployee.password}
+                onChange={(event) =>
+                  setNewEmployee((current) => ({
+                    ...current,
+                    password: event.target.value,
+                  }))
+                }
+                required
+                minLength="8"
+                style={{
+                  padding: "0.8rem 0.9rem",
+                  borderRadius: "0.7rem",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "1rem",
+                }}
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={isCreatingEmployee}
+              style={{
+                justifySelf: "start",
+                border: 0,
+                borderRadius: "0.8rem",
+                padding: "0.8rem 1.15rem",
+                backgroundColor: "#059669",
+                color: "#ffffff",
+                fontWeight: 700,
+                cursor: isCreatingEmployee ? "wait" : "pointer",
+                opacity: isCreatingEmployee ? 0.75 : 1,
+              }}
+            >
+              {isCreatingEmployee ? "Creating..." : "Create Staff Account"}
+            </button>
+          </form>
+        ) : null}
+      </section>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gap: "1.5rem",
+        }}
+      >
+        {renderUserTable({
+          title: "Accounts Ready for Promotion",
+          description:
+            "These customer accounts can be granted staff rights so they can view and serve customer orders.",
+          usersToRender: customers,
+          actionLabel: "Grant Serving Rights",
+          onAction: (user) => handleRoleChange(user, "employee"),
+          actionColor: "#0f766e",
+        })}
+
+        {renderUserTable({
+          title: "Current Staff",
+          description:
+            "Revoking staff access keeps the account but returns it to a normal customer role.",
+          usersToRender: employees,
+          actionLabel: "Revoke Staff Rights",
+          onAction: (user) => handleRoleChange(user, "customer"),
+          actionColor: "#b91c1c",
+        })}
+      </section>
+
+      <section style={{ ...panelStyle, padding: "1.4rem" }}>
+        <h2 style={{ margin: 0, color: "#172033", fontSize: "1.2rem" }}>
+          Owner Accounts
+        </h2>
+        <p style={{ margin: "0.35rem 0 1rem", color: "#64748b", lineHeight: 1.5 }}>
+          Owner accounts are visible here for reference and cannot be edited from
+          this screen.
+        </p>
+
+        {owners.length === 0 ? (
+          <EmptyState message="No owner account found." />
+        ) : (
+          <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ backgroundColor: "#f8fafc" }}>
-                  <th style={{ padding: "1rem", textAlign: "left", color: "#374151" }}>Username</th>
-                  <th style={{ padding: "1rem", textAlign: "left", color: "#374151" }}>Email</th>
-                  <th style={{ padding: "1rem", textAlign: "left", color: "#374151" }}>Role</th>
+                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                  <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                    Username
+                  </th>
+                  <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                    Email
+                  </th>
+                  <th style={{ padding: "0.85rem 0.75rem", textAlign: "left", color: "#475569" }}>
+                    Role
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} style={{ borderTop: "1px solid #e2e8f0" }}>
-                    <td style={{ padding: "1rem", color: "#172033" }}>{user.username}</td>
-                    <td style={{ padding: "1rem", color: "#172033" }}>{user.email}</td>
-                    <td style={{ padding: "1rem", color: "#172033" }}>
-                      <span
-                        style={{
-                          backgroundColor: user.role === "owner" ? "#fbbf24" : user.role === "employee" ? "#10b981" : "#6b7280",
-                          color: "white",
-                          padding: "0.25rem 0.5rem",
-                          borderRadius: "0.25rem",
-                          fontSize: "0.75rem",
-                          fontWeight: "600",
-                        }}
-                      >
-                        {user.role}
-                      </span>
+                {owners.map((user) => (
+                  <tr key={user.id} style={{ borderBottom: "1px solid #eef2f7" }}>
+                    <td style={{ padding: "1rem 0.75rem", color: "#172033", fontWeight: 700 }}>
+                      {user.username}
+                    </td>
+                    <td style={{ padding: "1rem 0.75rem", color: "#334155" }}>{user.email}</td>
+                    <td style={{ padding: "1rem 0.75rem" }}>
+                      <RoleBadge role={user.role} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-
-        <div>
-          <h2 style={{ marginBottom: "1rem", color: "#172033" }}>Employees</h2>
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "0.5rem",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              overflow: "hidden",
-            }}
-          >
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#f8fafc" }}>
-                  <th style={{ padding: "1rem", textAlign: "left", color: "#374151" }}>Username</th>
-                  <th style={{ padding: "1rem", textAlign: "left", color: "#374151" }}>Email</th>
-                  <th style={{ padding: "1rem", textAlign: "left", color: "#374151" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map((employee) => (
-                  <tr key={employee.id} style={{ borderTop: "1px solid #e2e8f0" }}>
-                    <td style={{ padding: "1rem", color: "#172033" }}>{employee.username}</td>
-                    <td style={{ padding: "1rem", color: "#172033" }}>{employee.email}</td>
-                    <td style={{ padding: "1rem" }}>
-                      <button
-                        onClick={() => handleDeleteEmployee(employee.id)}
-                        style={{
-                          backgroundColor: "#dc2626",
-                          color: "white",
-                          border: "none",
-                          padding: "0.5rem 1rem",
-                          borderRadius: "0.375rem",
-                          cursor: "pointer",
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

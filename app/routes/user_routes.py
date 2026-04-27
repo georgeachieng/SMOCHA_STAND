@@ -55,6 +55,33 @@ def create_employee():
     return jsonify({"message": "Employee created successfully", "data": employee.to_dict()}), 201
 
 
+@user_bp.patch("/<int:user_id>/role")
+@role_required("owner")
+def update_user_role(user_id):
+    payload = request.get_json(silent=True) or {}
+    new_role = payload.get("role", "").strip().lower()
+
+    if new_role not in {"employee", "customer"}:
+        return jsonify({"message": "role must be either employee or customer"}), 400
+
+    user = db.session.get(User, user_id)
+    if user is None:
+        return jsonify({"message": "User not found"}), 404
+
+    if user.role == "owner":
+        return jsonify({"message": "Owner permissions cannot be changed"}), 403
+
+    user.role = new_role
+    db.session.commit()
+
+    return jsonify(
+        {
+            "message": f"User role updated to {new_role}",
+            "user": user.to_dict(),
+        }
+    )
+
+
 @user_bp.delete("/employees/<int:user_id>")
 @role_required("owner")
 def delete_employee(user_id):

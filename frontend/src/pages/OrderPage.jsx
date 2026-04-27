@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function OrderPage() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]); // For employees/owners to view orders
@@ -16,15 +16,15 @@ export default function OrderPage() {
       .catch((err) => console.error("Failed to fetch products", err));
 
     // If employee or owner, fetch orders
-    if (user && (user.role === "employee" || user.role === "owner")) {
+    if (user && token && (user.role === "employee" || user.role === "owner")) {
       fetch("http://127.0.0.1:5000/api/orders", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
         .then((data) => setOrders(data.data || []))
         .catch((err) => console.error("Failed to fetch orders", err));
     }
-  }, [user]);
+  }, [token, user]);
 
   const addToCart = (product) => {
     setCart((prev) => {

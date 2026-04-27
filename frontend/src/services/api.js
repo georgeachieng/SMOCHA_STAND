@@ -63,6 +63,13 @@ class ApiService {
     });
   }
 
+  async updateUserRole(id, role) {
+    return this.request(`/users/${id}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+  }
+
   async deleteEmployee(id) {
     return this.request(`/users/employees/${id}`, {
       method: 'DELETE',
