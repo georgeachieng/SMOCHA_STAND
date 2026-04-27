@@ -41,7 +41,7 @@ export default function MainLayout() {
         }}
       >
         <Navbar onToggleSidebar={() => setIsSidebarOpen((current) => !current)} />
-        <main style={{ padding: "1.5rem" }}>
+        <main style={{ padding: "1rem", maxWidth: "1280px", margin: "0 auto" }}>
           <Outlet />
         </main>
       </div>

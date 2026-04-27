@@ -15,7 +15,9 @@ class ApiService {
       ...options,
     };
 
-    const token = localStorage.getItem('token');
+    // Get token from session storage
+    const session = JSON.parse(localStorage.getItem('smocha.auth') || 'null');
+    const token = session?.token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -48,6 +50,23 @@ class ApiService {
   // User methods
   async getUsers() {
     return this.request('/users');
+  }
+
+  async getEmployees() {
+    return this.request('/users/employees');
+  }
+
+  async createEmployee(employee) {
+    return this.request('/users/employees', {
+      method: 'POST',
+      body: JSON.stringify(employee),
+    });
+  }
+
+  async deleteEmployee(id) {
+    return this.request(`/users/employees/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Category methods

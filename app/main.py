@@ -7,6 +7,7 @@ from app.routes.user_routes import user_bp
 from app.routes.category_routes import category_bp
 from app.routes.product_routes import product_bp
 from app.routes.supplier_routes import supplier_bp
+from app.routes.order_routes import order_bp
 
 
 def create_app(config_object=None):
@@ -30,6 +31,7 @@ def register_blueprints(app):
     app.register_blueprint(category_bp)
     app.register_blueprint(product_bp)
     app.register_blueprint(supplier_bp)
+    app.register_blueprint(order_bp)
 
 
 def register_error_handlers(app):

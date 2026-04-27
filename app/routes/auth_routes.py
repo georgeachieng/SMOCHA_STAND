@@ -7,7 +7,22 @@ from app.models.user import User
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-VALID_ROLES = {"admin", "staff"}
+OWNER_USERNAME = "achieng.george"
+STAFF_USERNAMES = {
+    "yampoy.elvis",
+    "burgei.joy",
+    "kweyu.ashanti",
+}
+STAFF_EMAILS = {
+    "elvis.yampoy@student.moringaschool.com",
+    "joy.burgei@student.moringaschool.com",
+    "ashanti.kweyu@student.moringaschool.com",
+}
+VALID_ROLES = {"owner", "employee", "customer"}
+
+
+def _is_staff_signup(username, email):
+    return username.lower() in STAFF_USERNAMES or email.lower() in STAFF_EMAILS
 
 
 def _validate_registration_payload(payload):
@@ -36,19 +51,34 @@ def register():
     if User.query.filter_by(email=payload["email"]).first():
         return jsonify({"message": "Email already exists"}), 409
 
-    requested_role = payload.get("role", "staff")
-    is_first_user = User.query.count() == 0
+    username = payload["username"].strip()
+    email = payload["email"].strip().lower()
+    requested_role = payload.get("role", "customer")
+    owner_exists = User.query.filter_by(role="owner").first() is not None
 
     if requested_role not in VALID_ROLES:
         return jsonify({"message": "Invalid role supplied"}), 400
 
-    if requested_role == "admin" and not is_first_user:
-        return jsonify({"message": "Admin role cannot be self-assigned"}), 403
+    if requested_role == "owner" and owner_exists:
+        return jsonify({"message": "Owner role cannot be self-assigned"}), 403
+
+    if not owner_exists:
+        if username.lower() != OWNER_USERNAME:
+            return jsonify(
+                {
+                    "message": f"The first account must be the owner: {OWNER_USERNAME}",
+                }
+            ), 403
+        role = "owner"
+    else:
+        if username.lower() == OWNER_USERNAME:
+            return jsonify({"message": "Owner account already exists"}), 403
+        role = "employee" if _is_staff_signup(username, email) else "customer"
 
     user = User(
-        username=payload["username"].strip(),
-        email=payload["email"].strip().lower(),
-        role=requested_role if is_first_user else "staff",
+        username=username,
+        email=email,
+        role=role,
     )
     user.set_password(payload["password"])
 

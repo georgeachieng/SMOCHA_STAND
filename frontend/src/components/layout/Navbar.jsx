@@ -37,7 +37,7 @@ export default function Navbar({ onToggleSidebar }) {
           <p
             style={{
               margin: 0,
-              fontSize: "0.8rem",
+              fontSize: "0.7rem",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "#b45f06",
@@ -48,8 +48,8 @@ export default function Navbar({ onToggleSidebar }) {
           </p>
           <h2
             style={{
-              margin: "0.2rem 0 0",
-              fontSize: "1.1rem",
+              margin: "0.15rem 0 0",
+              fontSize: "1rem",
               color: "#172033",
             }}
           >
@@ -73,8 +73,8 @@ export default function Navbar({ onToggleSidebar }) {
           onClick={logout}
           style={{
             border: 0,
-            borderRadius: "0.8rem",
-            padding: "0.75rem 1rem",
+            borderRadius: "0.6rem",
+            padding: "0.5rem 0.75rem",
             backgroundColor: "#172033",
             color: "#ffffff",
             fontWeight: 700,

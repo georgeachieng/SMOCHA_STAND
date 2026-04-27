@@ -43,7 +43,7 @@ export default function Login() {
       <AuthForm
         mode="login"
         title="Welcome back"
-        subtitle="Sign in to access the dashboard shell and continue managing the store."
+        subtitle="Sign in to place your order or manage the stand."
         fields={fields}
         submitLabel="Login"
         onSubmit={async (values) => {

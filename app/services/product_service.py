@@ -32,3 +32,20 @@ class ProductService:
         db.session.add(new_product)
         db.session.commit()
         return new_product
+
+    @staticmethod
+    def update_product(product, data):
+        for field in [
+            'name',
+            'description',
+            'price',
+            'stock_quantity',
+            'reorder_level',
+            'category_id',
+            'supplier_id',
+        ]:
+            if field in data:
+                setattr(product, field, data[field])
+
+        db.session.commit()
+        return product

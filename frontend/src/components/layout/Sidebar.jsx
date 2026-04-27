@@ -1,7 +1,8 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const navItems = [
-  { label: "Dashboard", to: "/" },
+  { label: "Dashboard", to: "/dashboard" },
   { label: "Products", to: "/products" },
   { label: "Suppliers", to: "/suppliers" },
   { label: "Categories", to: "/categories" },
@@ -9,6 +10,12 @@ const navItems = [
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
+  const { user } = useAuth();
+
+  const allNavItems = [
+    ...navItems,
+    ...(user?.role === "owner" ? [{ label: "Users", to: "/users" }] : []),
+  ];
   return (
     <>
       {isOpen ? (
@@ -29,7 +36,7 @@ export default function Sidebar({ isOpen, onClose }) {
       <aside
         style={{
           position: "fixed",
-          top: 0,
+          top: "72px",
           left: 0,
           bottom: 0,
           width: "280px",
@@ -38,16 +45,17 @@ export default function Sidebar({ isOpen, onClose }) {
           background:
             "linear-gradient(180deg, #111827 0%, #172033 60%, #2b3448 100%)",
           color: "#ffffff",
-          padding: "1.5rem 1rem",
+          padding: "1rem 0.75rem",
           zIndex: 10,
           boxShadow: "24px 0 70px rgba(15, 23, 42, 0.22)",
+          height: "calc(100vh - 72px)",
         }}
       >
-        <div style={{ marginBottom: "2rem", paddingInline: "0.6rem" }}>
+        <div style={{ marginBottom: "1rem", paddingInline: "0.5rem" }}>
           <p
             style={{
               margin: 0,
-              fontSize: "0.8rem",
+              fontSize: "0.7rem",
               color: "#fbbf24",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
@@ -56,13 +64,13 @@ export default function Sidebar({ isOpen, onClose }) {
           >
             Navigation
           </p>
-          <h2 style={{ margin: "0.45rem 0 0", fontSize: "1.35rem" }}>
+          <h2 style={{ margin: "0.3rem 0 0", fontSize: "1.1rem" }}>
             Shared app shell
           </h2>
         </div>
 
-        <nav style={{ display: "grid", gap: "0.5rem" }}>
-          {navItems.map((item) =>
+        <nav style={{ display: "grid", gap: "0.25rem" }}>
+          {allNavItems.map((item) =>
             item.disabled ? (
               <div
                 key={item.label}

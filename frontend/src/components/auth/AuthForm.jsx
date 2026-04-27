@@ -3,18 +3,18 @@ import { useState } from "react";
 const styles = {
   field: {
     display: "grid",
-    gap: "0.5rem",
+    gap: "0.25rem",
   },
   input: {
     border: "1px solid #d5d9e2",
-    borderRadius: "0.9rem",
-    padding: "0.95rem 1rem",
-    fontSize: "0.98rem",
+    borderRadius: "0.5rem",
+    padding: "0.75rem 0.75rem",
+    fontSize: "0.9rem",
     backgroundColor: "#ffffff",
     color: "#172033",
   },
   label: {
-    fontSize: "0.92rem",
+    fontSize: "0.85rem",
     fontWeight: 600,
     color: "#31405f",
   },
@@ -60,11 +60,11 @@ export default function AuthForm({
   return (
     <div
       style={{
-        width: "min(100%, 460px)",
+        width: "min(100%, 400px)",
         backgroundColor: "rgba(255, 255, 255, 0.94)",
         border: "1px solid rgba(214, 220, 232, 0.9)",
-        borderRadius: "1.5rem",
-        padding: "2rem",
+        borderRadius: "1rem",
+        padding: "1.5rem",
         boxShadow: "0 24px 80px rgba(13, 29, 56, 0.14)",
         backdropFilter: "blur(18px)",
       }}
@@ -75,7 +75,7 @@ export default function AuthForm({
             margin: 0,
             color: "#b45f06",
             fontWeight: 700,
-            fontSize: "0.82rem",
+            fontSize: "0.75rem",
             letterSpacing: "0.12em",
             textTransform: "uppercase",
           }}
@@ -84,19 +84,19 @@ export default function AuthForm({
         </p>
         <h1
           style={{
-            margin: "0.7rem 0 0.5rem",
-            fontSize: "2rem",
+            margin: "0.5rem 0 0.25rem",
+            fontSize: "1.75rem",
             color: "#172033",
           }}
         >
           {title}
         </h1>
-        <p style={{ margin: 0, color: "#5f6f90", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: "#5f6f90", lineHeight: 1.6, fontSize: "0.9rem" }}>
           {subtitle}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
+      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "0.75rem" }}>
         {fields.map((field) => (
           <label key={field.name} style={styles.field}>
             <span style={styles.label}>{field.label}</span>
@@ -116,12 +116,12 @@ export default function AuthForm({
         {error ? (
           <div
             style={{
-              borderRadius: "0.9rem",
+              borderRadius: "0.5rem",
               backgroundColor: "#fff1f2",
               border: "1px solid #fecdd3",
               color: "#be123c",
-              padding: "0.9rem 1rem",
-              fontSize: "0.92rem",
+              padding: "0.75rem 0.75rem",
+              fontSize: "0.85rem",
             }}
           >
             {error}
@@ -133,13 +133,13 @@ export default function AuthForm({
           disabled={isSubmitting}
           style={{
             border: 0,
-            borderRadius: "0.95rem",
-            padding: "1rem 1.15rem",
+            borderRadius: "0.75rem",
+            padding: "0.75rem 1rem",
             background:
               "linear-gradient(135deg, #111827 0%, #22314e 50%, #915313 100%)",
             color: "#ffffff",
             fontWeight: 700,
-            fontSize: "1rem",
+            fontSize: "0.9rem",
             cursor: isSubmitting ? "wait" : "pointer",
             opacity: isSubmitting ? 0.7 : 1,
           }}
@@ -150,9 +150,9 @@ export default function AuthForm({
 
       <div
         style={{
-          marginTop: "1.25rem",
+          marginTop: "1rem",
           color: "#5f6f90",
-          fontSize: "0.94rem",
+          fontSize: "0.85rem",
         }}
       >
         {footer}

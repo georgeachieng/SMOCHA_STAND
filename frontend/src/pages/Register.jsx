@@ -47,7 +47,7 @@ export default function Register() {
       <AuthForm
         mode="register"
         title="Create your account"
-        subtitle="Register a team member and land directly inside the protected dashboard shell."
+        subtitle="Create an account to start ordering from Smocha Stand."
         fields={fields}
         submitLabel="Register"
         onSubmit={async (values) => {
