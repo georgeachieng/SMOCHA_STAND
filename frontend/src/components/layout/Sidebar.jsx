@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const allNavItems = [
     ...navItems,
-    ...(user?.role === "owner" ? [{ label: "Users", to: "/users" }] : []),
+    ...(user?.role === "owner" ? [{ label: "Staff", to: "/staff" }] : []),
   ];
   return (
     <>

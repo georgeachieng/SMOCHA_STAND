@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api.js";
 
-export default function UsersPage() {
+export default function StaffPage() {
   const [users, setUsers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export default function UsersPage() {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h1 style={{ marginBottom: "2rem", color: "#172033" }}>User Management</h1>
+      <h1 style={{ marginBottom: "2rem", color: "#172033" }}>Staff Management</h1>
 
       {error && (
         <div
@@ -191,7 +191,7 @@ export default function UsersPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
         <div>
-          <h2 style={{ marginBottom: "1rem", color: "#172033" }}>All Users</h2>
+          <h2 style={{ marginBottom: "1rem", color: "#172033" }}>All Staff & Owners</h2>
           <div
             style={{
               backgroundColor: "white",

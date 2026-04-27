@@ -9,7 +9,7 @@ import ProductsPage from "./pages/ProductsPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import InventoryPage from "./pages/InventoryPage";
 import OrderPage from "./pages/OrderPage";
-import UsersPage from "./pages/UsersPage";
+import StaffPage from "./pages/StaffPage";
 import { useAuth } from "./hooks/useAuth";
 
 function Home() {
@@ -32,7 +32,7 @@ export default function AppRoutes() {
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/users" element={<UsersPage />} />
+          <Route path="/staff" element={<ProtectedRoute requiredRole="owner"><StaffPage /></ProtectedRoute>} />
         </Route>
       </Route>
 

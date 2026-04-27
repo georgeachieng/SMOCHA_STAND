@@ -19,8 +19,8 @@ function FullScreenMessage({ message }) {
   );
 }
 
-export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+export default function ProtectedRoute({ requiredRole }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -29,6 +29,10 @@ export default function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (requiredRole && user?.role !== requiredRole) {
+    return <FullScreenMessage message="Access denied: insufficient permissions" />;
   }
 
   return <Outlet />;
